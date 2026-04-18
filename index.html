@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Flashcards de Criminalística para estudos e concursos">
+  <title>Flashcards — Criminalística</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f4f0;min-height:100vh;padding:20px 16px 48px;color:#1a1a1a}
+    .app{max-width:440px;margin:0 auto}
+    h1{font-size:20px;font-weight:700;letter-spacing:-.3px}
+    .subtitle{font-size:13px;color:#999;margin-top:3px;margin-bottom:20px}
+    .pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:16px;scrollbar-width:none;-ms-overflow-style:none}
+    .pills::-webkit-scrollbar{display:none}
+    .pill{padding:5px 11px;border-radius:20px;border:1.5px solid #ddd;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;background:#fff;color:#777;transition:all .15s;outline:none}
+    .pill:hover{border-color:#bbb;color:#444}
+    .prog-row{display:flex;justify-content:space-between;font-size:11px;color:#bbb;margin-bottom:5px}
+    .prog-track{height:3px;background:#e8e7e3;border-radius:2px;overflow:hidden;margin-bottom:14px}
+    .prog-fill{height:100%;border-radius:2px;transition:width .35s ease}
+    .card{background:#fff;border-radius:16px;border:1px solid #ebebeb;border-left-width:4px;padding:20px;min-height:200px;cursor:pointer;transition:background .2s;display:flex;flex-direction:column;justify-content:space-between;margin-bottom:12px;user-select:none;-webkit-tap-highlight-color:transparent}
+    .card.flipped{background:#f9f8f5}
+    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;white-space:nowrap}
+    .side-label{font-size:10px;color:#ccc;text-transform:uppercase;letter-spacing:.5px}
+    .card-text{font-size:15px;line-height:1.65;color:#1a1a1a;flex:1}
+    .card.flipped .card-text{font-size:14px;color:#333}
+    .card-hint{font-size:11px;color:#d0d0d0;text-align:center;margin-top:14px}
+    .action-row{display:flex;gap:8px;margin-bottom:8px}
+    .btn{flex:1;padding:11px;border-radius:12px;border:1px solid;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;outline:none}
+    .btn:active{transform:scale(.97)}
+    .btn-review{background:#fff5f5;border-color:#ffc5c5;color:#d43b3b}
+    .btn-review:hover{background:#ffe8e8}
+    .btn-know{background:#f0fff6;border-color:#aff0cd;color:#1a8a48}
+    .btn-know:hover{background:#d8faec}
+    .nav-row{display:flex;gap:8px}
+    .btn-nav{flex:1;padding:11px;border-radius:12px;border:1px solid #e0e0e0;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:#666;transition:all .15s;outline:none}
+    .btn-nav:hover{background:#f5f4f0;border-color:#ccc}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+    .stat{border-radius:12px;padding:12px 8px;text-align:center}
+    .stat .n{font-size:22px;font-weight:700}
+    .stat .l{font-size:11px;margin-top:2px}
+    .s-know{background:#f0fff6}.s-know .n,.s-know .l{color:#1a8a48}
+    .s-rev{background:#fff5f5}.s-rev .n,.s-rev .l{color:#d43b3b}
+    .s-pend{background:#f3f3f0}.s-pend .n,.s-pend .l{color:#999}
+    .kb{font-size:11px;color:#ccc;text-align:center;margin-top:10px}
+    .kb kbd{display:inline-block;background:#eee;border-radius:4px;padding:1px 5px;font-family:monospace;font-size:10px;color:#888;margin:0 1px}
+    .done{margin-top:16px;background:#f0fff6;border:1px solid #aff0cd;border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
+    .done-t{font-size:13px;font-weight:700;color:#1a8a48}
+    .done-s{font-size:12px;color:#2ab860;margin-top:2px}
+    .btn-sm{padding:7px 13px;border-radius:8px;border:1px solid;font-size:12px;font-weight:600;cursor:pointer;background:transparent;outline:none}
+    .btn-sm-green{border-color:#aff0cd;color:#1a8a48}.btn-sm-green:hover{background:#d8faec}
+    .btn-sm-gray{border-color:#ddd;color:#aaa;margin-top:18px;display:block;margin-left:auto;margin-right:auto}.btn-sm-gray:hover{background:#eee}
+    .empty{text-align:center;padding:48px 20px}
+    .empty p{font-size:15px;color:#aaa;margin-bottom:16px}
+    @media(max-width:360px){body{padding:12px 12px 32px}.card-text{font-size:14px}}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useCallback,useEffect}=React;
+
+const RAMPS={
+  "Conceitos básicos":      {bg:"#FAEEDA",bo:"#BA7517",ba:"#854F0B"},
+  "Princípios e postulados":{bg:"#EEEDFE",bo:"#534AB7",ba:"#3C3489"},
+  "Vestígios":              {bg:"#E1F5EE",bo:"#1D9E75",ba:"#0F6E56"},
+  "Cadeia de custódia":     {bg:"#E6F1FB",bo:"#378ADD",ba:"#0C447C"},
+  "Local de crime":         {bg:"#FAECE7",bo:"#D85A30",ba:"#993C1D"},
+  "Balística":              {bg:"#FCEBEB",bo:"#E24B4A",ba:"#A32D2D"},
+  "Dactiloscopia":          {bg:"#EAF3DE",bo:"#639922",ba:"#3B6D11"},
+  "DNA e identificação":    {bg:"#FBEAF0",bo:"#D4537E",ba:"#993556"},
+  "Fotografia forense":     {bg:"#F1EFE8",bo:"#888780",ba:"#5F5E5A"},
+};
+
+const C=(id,cat,q,a)=>({id,cat,q,a});
+const CARDS=[
+C(1,"Conceitos básicos","Quem é o 'Pai da Criminalística' e qual sua obra?","Hans Gross (1847–1915), juiz austríaco. Publicou o 'Manual do Juiz de Instrução' (1893, versão final 1898), sistematizando a criminalística e cunhando o termo pela primeira vez."),
+C(2,"Conceitos básicos","Como Del Picchia Filho definiu a Criminalística (1947)?","Disciplina cujo objetivo é o reconhecimento e interpretação de indícios materiais extrínsecos relativos ao crime ou à identidade do criminoso. Vestígios intrínsecos (no corpo) = Medicina Legal."),
+C(3,"Conceitos básicos","Como Eraldo Rabelo definiu a Criminalística?","Disciplina autônoma integrada por ramos técnico-científicos, auxiliar das atividades policiais e judiciárias, que estuda vestígios materiais extrínsecos à pessoa física para elucidar infrações penais."),
+C(4,"Conceitos básicos","Como Juventino Montiel Sosa definiu a Criminalística?","Ciência natural e penal que, mediante conhecimentos, metodologia e tecnologia, estuda evidências materiais, descobre a existência de fato delituoso e seus autores, fornecendo provas à Justiça."),
+C(5,"Conceitos básicos","Quais são as 7 perguntas da Criminalística (Quintiliano)?","O quê? Quem? Quando? Onde? Como? Com que auxílio? Por quê? As seis primeiras pertencem à criminalística; a sétima (motivação) pertence à criminologia."),
+C(6,"Conceitos básicos","O que distingue Criminalística, Medicina Legal e Criminologia?","Criminalística: vestígios extrínsecos (cena/objetos). Medicina Legal: vestígios intrínsecos (corpo). Criminologia: causas e motivações do crime (por quê?)."),
+C(7,"Conceitos básicos","O que é o Corpo de Delito?","Todo vestígio material originário de uma conduta delituosa — não só o cadáver, mas sangue, DNA, projéteis, perfurações, documentos — qualquer elemento que prove a materialidade da infração."),
+C(8,"Conceitos básicos","O que determina o art. 158 do CPP?","Quando a infração deixar vestígios, o exame de corpo de delito é indispensável — direto ou indireto — e não pode ser suprido pela confissão do acusado."),
+C(9,"Conceitos básicos","O que permite o art. 167 do CPP?","Quando não for possível o exame de corpo de delito por desaparecimento dos vestígios, a prova testemunhal poderá suprir-lhe a falta."),
+C(10,"Conceitos básicos","Quem deve realizar o exame de corpo de delito (art. 159 CPP)?","Perito oficial com diploma superior. Na falta: duas pessoas idôneas (peritos ad hoc), com diploma e habilitação na área, nomeadas pela autoridade."),
+C(11,"Conceitos básicos","Quais são os peritos oficiais de natureza criminal (Lei 12.030/2009)?","Perito criminal (cenas e laboratório), médico legista (exames médico-legais e necrópsia) e odontolegista (identificação odontológica forense)."),
+C(12,"Conceitos básicos","O que é o assistente técnico e como difere do perito oficial?","Especialista contratado pela parte para fiscalizar a perícia e emitir parecer técnico. Atua na fase processual. Produz parecer, não laudo; sem fé pública automática."),
+C(13,"Conceitos básicos","Quais são as 9 partes típicas do laudo pericial?","1-Preâmbulo, 2-Quesitos, 3-Histórico, 4-Descrição, 5-Discussão, 6-Resultados, 7-Conclusão, 8-Respostas aos quesitos, 9-Data e assinatura do perito."),
+C(14,"Conceitos básicos","Quem pode formular quesitos e até quando?","MP, ofendido/querelante e acusado (art. 159 §3º CPP). Devem ser apresentados até o início da diligência pericial."),
+C(15,"Conceitos básicos","Qual o prazo para entrega do laudo pericial?","10 dias a partir da designação da perícia. Prorrogável mediante justificativa do perito e autorização da autoridade requisitante."),
+C(16,"Conceitos básicos","Qual o prazo mínimo entre óbito e necrópsia, e quando pode ser dispensado?","Mínimo 6 horas (art. 162 CPP). Pode ser realizada antes se os peritos verificarem sinais inequívocos de morte, declarando isso no auto."),
+C(17,"Conceitos básicos","Quais são os três níveis de identificação (Princípio de Kirk)?","Genérica: classe geral (sedã azul). Específica: modelo/tipo (Siena Fire 2012 azul). Individual: elemento único (NIV/chassi). A perícia deve sempre alcançar o grau individual."),
+C(18,"Conceitos básicos","Qual o valor probatório da confissão no processo penal?","Relativo — deve ser confrontada com demais provas. É divisível (juiz aproveita parte) e retratável. Não supre o exame de corpo de delito quando há vestígios."),
+C(19,"Conceitos básicos","O que é o princípio do Perito Natural?","O perito oficial é designado pelo diretor do próprio órgão pericial — não pelo juiz, MP ou delegado — para evitar ingerência externa e garantir autonomia técnica."),
+C(20,"Conceitos básicos","O que ocorre quando dois peritos apresentam conclusões divergentes?","Divergências são consignadas nos laudos individuais. A autoridade pode nomear terceiro perito, determinar nova perícia ou manter laudos separados para apreciação do juiz (art. 180 CPP)."),
+C(21,"Conceitos básicos","Quando pode ser dispensado o exame interno na morte violenta?","Quando não houver infração a apurar ou quando lesões externas permitirem precisar a causa da morte sem exame interno (art. 162 §único CPP). Decisão técnica do médico legista."),
+C(22,"Conceitos básicos","O que é a Exumação e o que exige formalmente?","Remoção do cadáver enterrado para fins periciais. Exige ordem judicial/policial, presença de médico legista, fotografias e lavratura de auto assinado por testemunhas fedatárias."),
+C(23,"Conceitos básicos","O que é a Reprodução Simulada dos Fatos?","Diligência que reconstitui a dinâmica do crime para entender o modus operandi. Deve respeitar ordem pública e moralidade. Etapa do levantamento descritivo do local."),
+C(24,"Conceitos básicos","Quais crimes têm prioridade para o exame de corpo de delito?","Violência doméstica/familiar contra mulher; crimes contra crianças, adolescentes, idosos e pessoas com deficiência (art. 158 §único CPP)."),
+C(25,"Conceitos básicos","O que é perícia complexa e como é conduzida?","Perícia que demanda mais de uma área do conhecimento. Admite dois ou mais peritos oficiais especializados atuando conjuntamente, com assistentes técnicos de cada parte."),
+C(26,"Princípios e postulados","Macete TPM: quais são os 3 Postulados?","T=Tempo: perícia independe do tempo decorrido. P=Perito: resultado não varia conforme quem realiza. M=Meios: conclusões independem da técnica, desde que adequada."),
+C(27,"Princípios e postulados","Como o Postulado do Perito se aplica na prática?","Dois peritos aplicando os mesmos critérios científicos ao mesmo material devem chegar às mesmas conclusões. Divergências sem fundamento técnico contradizem o postulado."),
+C(28,"Princípios e postulados","Como o Postulado do Tempo se aplica?","Um laudo bem fundamentado deve ser coerente ao longo do tempo. Reanálise que mude conclusões só é válida com novas evidências ou erro demonstrável no exame original."),
+C(29,"Princípios e postulados","Exemplo que ilustra o Postulado dos Meios?","Microcomparação balística manual vs sistema IBIS automatizado — o resultado deve ser idêntico, pois ambos são métodos científicos adequados para a mesma finalidade."),
+C(30,"Princípios e postulados","Qual frase resume o Princípio da Observação e quem a criou?","'Todo contato deixa uma marca' — Edmond Locard. A interação entre suspeito, vítima e local produz trocas de vestígios detectáveis, mesmo que apenas microscopicamente."),
+C(31,"Princípios e postulados","Exemplo prático do Princípio de Locard?","Autor que pisa em poça de sangue da vítima e deixa pegadas na fuga. Há troca mútua: sangue fica no sapato do autor; impressão do solado fica no chão."),
+C(32,"Princípios e postulados","O que afirma o Princípio da Individualidade (Kirk)?","'Dois objetos podem ser indistinguíveis, mas nunca idênticos.' Sempre existem características individualizantes detectáveis — DNA, estrias balísticas, NIV de veículo."),
+C(33,"Princípios e postulados","Como Kirk se aplica ao sangue como vestígio?","Mancha com DNA extraído = vestígio absoluto (individualiza). Mancha apenas com tipagem ABO = vestígio relativo (restringe suspeitos, mas não identifica individualmente)."),
+C(34,"Princípios e postulados","O que orienta o Princípio da Análise?","O perito coleta dados, formula hipóteses e as testa com métodos científicos validados. Resultados devem ser reprodutíveis, documentados e verificáveis por pares."),
+C(35,"Princípios e postulados","O que exige o Princípio da Descrição?","Linguagem clara, técnica e juridicamente adequada no laudo. O perito descreve o que observou, os métodos usados e as conclusões fundamentadas — sem juízo de valor sem embasamento."),
+C(36,"Princípios e postulados","Como o Princípio da Documentação se conecta à cadeia de custódia?","A cadeia de custódia é a aplicação prática do Princípio da Documentação: registro cronológico de cada vestígio do reconhecimento ao descarte, com responsáveis e condições de cada etapa."),
+C(37,"Princípios e postulados","Qual a diferença fundamental entre Postulados e Princípios?","Postulados: características epistemológicas (invariância do resultado). Princípios: orientações práticas sobre como o perito deve agir para produzir prova científica válida."),
+C(38,"Princípios e postulados","Exemplo de violação do Postulado do Perito?","Lab A identifica pó como cocaína; Lab B, sem justificativa, conclui outra substância. Indica falha metodológica, contaminação ou ausência de padrão científico."),
+C(39,"Princípios e postulados","Como Locard se aplica a microvestígios?","Células epiteliais, fibras e resíduos são transferidos mesmo sem contato visível. O 'touch DNA' detecta células depositadas pelo simples toque, sem manchas visíveis."),
+C(40,"Princípios e postulados","Quais são os 5 princípios fundamentais da Criminalística?","1-Observação (Locard/troca), 2-Análise (método científico), 3-Interpretação (Kirk/individualidade), 4-Descrição (linguagem jurídica), 5-Documentação (cadeia de custódia)."),
+C(41,"Princípios e postulados","O Princípio de Kirk se aplica só a objetos físicos?","Não. Aplica-se a evidências biológicas, digitais e documentais. O DNA é o exemplo máximo: cada indivíduo tem perfil único, atingindo identificação individual completa."),
+C(42,"Princípios e postulados","Como o Princípio da Análise diferencia a perícia da simples observação?","A análise exige método científico, hipótese testável, protocolo reprodutível e documentação. O perito formula hipóteses e busca evidências para corroborá-las ou refutá-las."),
+C(43,"Princípios e postulados","Por que o Postulado dos Meios tem ressalvas práticas?","Técnicas têm sensibilidade e especificidade distintas. Métodos inadequados geram resultados falsos. A invariância pressupõe que ambas as técnicas sejam científicas e adequadas."),
+C(44,"Princípios e postulados","Como bancas de concurso cobram os princípios?","Frequentemente trocam palavras ou usam sinônimos ('princípio científico' por 'princípio da análise'). Entender a lógica de cada princípio é mais eficaz do que decorar só os rótulos."),
+C(45,"Princípios e postulados","O Princípio da Documentação impede revisão do laudo?","Não. Permite revisão, mas exige que qualquer alteração seja fundamentada e registrada. Modificação sem fundamento viola o Princípio da Descrição e compromete a validade probatória."),
+C(46,"Vestígios","Definição legal de Vestígio — CPP art. 158-A §3º?","'Todo objeto ou material bruto, visível ou latente, constatado ou recolhido, que se relaciona à infração penal.' A lei só considera o vestígio verdadeiro; a doutrina admite ilusórios e forjados."),
+C(47,"Vestígios","O que caracteriza um Vestígio Verdadeiro?","Produzido diretamente pelos autores ou pela dinâmica da infração, com nexo causal com o delito. Inclui os 'acidentais' — como impressões digitais deixadas involuntariamente pelo agente."),
+C(48,"Vestígios","Exemplo de Vestígio Ilusório em acidente de trânsito?","Marcas de pneus que o mesmo condutor deixou horas antes no mesmo local. Produzidas sem intenção em circunstância diversa, sem nexo com o crime."),
+C(49,"Vestígios","Exemplo de Vestígio Forjado e consequência jurídica?","Colocar impressão digital de outra pessoa na arma do crime para incriminar inocente. Pode configurar Fraude Processual (art. 347 CP) — exige dolo."),
+C(50,"Vestígios","Qual o critério que distingue Vestígio Ilusório de Forjado?","A intenção: ilusório é produzido SEM intenção de enganar (acidental, sem nexo). Forjado é produzido COM intenção de modificar o conjunto de elementos originais da cena."),
+C(51,"Vestígios","O que são Microvestígios e como são detectados?","Vestígios invisíveis por serem muito pequenos (fibras, pelos, partículas de pólvora). Detectados por instrumentos ópticos (lupa, microscópio). Não confundir com latentes."),
+C(52,"Vestígios","Qual a diferença entre Microvestígio e Vestígio Latente?","Microvestígio: invisível por tamanho → revelado por ampliação óptica. Latente: invisível por fatores físico-químicos → revelado por reagentes ou luz forense."),
+C(53,"Vestígios","Por que vestígios fugazes têm prioridade na coleta?","Por sua curta janela de existência — desaparecem rapidamente. A autoridade deve isolar o local e acionar a perícia imediatamente."),
+C(54,"Vestígios","Exemplo de vestígio Persistente?","Mancha de sangue em tecido pode durar meses, mas se degrada com umidade, calor e microrganismos. Coleta e armazenamento adequados são essenciais para preservar o DNA."),
+C(55,"Vestígios","Exemplo de vestígio Perene?","Dano estrutural em veículo após colisão; amassado permanente em metal. Praticamente imutável ao longo do tempo."),
+C(56,"Vestígios","Como o Luminol revela vestígios latentes de sangue?","Reage com a hemoglobina, produzindo quimioluminescência visível no escuro. Detecta sangue mesmo após limpeza. Teste presuntivo — exige confirmação laboratorial."),
+C(57,"Vestígios","O que são fontes de luz alternada (ALS)?","Equipamentos que emitem diferentes comprimentos de onda para tornar visíveis vestígios latentes: fluidos biológicos, impressões digitais, fibras e materiais fluorescentes."),
+C(58,"Vestígios","Exemplo de vestígio absoluto vs relativo com sangue?","DNA extraído da mancha: absoluto (identifica individualmente). Somente tipagem ABO: relativo (exclui incompatíveis, não identifica o indivíduo)."),
+C(59,"Vestígios","O que são Vestígios de Impressão?","Vestígios que reproduzem a forma do objeto produtor: impressões de pneus, solas de calçado, estrias em projéteis — comparáveis ao instrumento de origem."),
+C(60,"Vestígios","Quais vestígios biológicos podem ser encontrados em cena de crime?","Sangue, saliva, sêmen, urina, pelos/cabelos, suor, vômito, secreção vaginal, muco, líquido amniótico e material subungueal (tecido do agressor sob as unhas da vítima)."),
+C(61,"Vestígios","Exemplos de vestígios NÃO-biológicos?","Fibras têxteis, marcas pneumáticas, armas brancas, componentes balísticos, dispositivos eletrônicos, documentos, ferramentas, grãos, pós, líquidos e detonadores."),
+C(62,"Vestígios","O que é o mnemônico DOTEMA?","DOcumentais, TEstemunhais e MAteriais — os três tipos de prova segundo CPP/CPC."),
+C(63,"Vestígios","O que é prova direta e indireta?","Direta: o fato é percebido pelo próprio julgador. Indireta: conhecimento resulta de intermediação — histórica (documental, testemunhal) ou crítica (indícios, presunções)."),
+C(64,"Vestígios","O que é a prova pericial/material?","Vestígios analisados cientificamente que comprovam a dinâmica e a autoria do delito. Produzida por perito; caráter objetivo e reprodutível, reduzindo subjetividade do julgamento."),
+C(65,"Vestígios","Definição de Indício segundo o art. 239 do CPP?","'A circunstância conhecida e provada que, tendo relação com o fato, autorize, por indução, concluir-se a existência de outra ou outras circunstâncias.' É prova indireta."),
+C(66,"Vestígios","Exemplo de indício em cena de homicídio?","Impressão digital do suspeito na arma indica que ele a manuseou — é indício de autoria, não prova direta. A autoria deve ser confirmada pelo conjunto probatório."),
+C(67,"Vestígios","O que transforma um vestígio bruto em Evidência?","A análise pericial que comprova técnica e cientificamente a relação do vestígio com o fato. Ex.: pó branco → identificado como cocaína → evidência de tráfico."),
+C(68,"Vestígios","O que são vestígios entomológicos?","Insetos e suas fases (larvas, pupas) encontrados no cadáver. Usados para estimar o intervalo pós-morte (IPM) com base no ciclo de vida das espécies e na temperatura."),
+C(69,"Vestígios","O que é a entomogenética forense?","Análise de DNA nas larvas que se alimentaram do cadáver. Permite identificar DNA humano quando o tecido original está degradado — ex.: identificar agressor em crime sexual."),
+C(70,"Vestígios","O que são vestígios digitais?","Dados eletrônicos (arquivos, logs, metadados, mensagens, histórico) em dispositivos ou servidores. São o 'local de crime' dos delitos cibernéticos."),
+C(71,"Vestígios","Quais os pressupostos do vestígio verdadeiro (doutrina)?","Espontaneidade do surgimento (não dolosamente provocado) e relação causal com o fato principal (nexo com a infração penal)."),
+C(72,"Vestígios","Por que o CPP só considera o vestígio verdadeiro?","O art. 158-A §3 exige relação com a infração. A doutrina é mais ampla, reconhecendo que o perito encontra os três tipos (verdadeiro, ilusório, forjado) no local."),
+C(73,"Vestígios","O que é o teste presuntivo e quando deve ser confirmado?","Triagem rápida in loco (colorimétrico para sangue ou droga). Indica possibilidade — positivo exige confirmação laboratorial confirmatória para fins judiciais."),
+C(74,"Vestígios","O que é o Amido Black e quando é usado?","Reagente que impregna o sangue, aumentando contraste para revelar impressões digitais em superfícies hemáticas."),
+C(75,"Vestígios","Quais vestígios têm prioridade em crime sexual?","Sêmen (swab vaginal/anal/oral), fibras, cabelos, roupas íntimas, marcas de mordida, hematomas, preservativo (interno=DNA autor; externo=DNA vítima). Orientar vítima a não se higienizar."),
+C(76,"Cadeia de custódia","O que é a cadeia de custódia e qual seu objetivo?","Conjunto de procedimentos para documentar a história cronológica do vestígio do reconhecimento ao descarte. Objetivo: garantir integridade, autenticidade e rastreabilidade probatória."),
+C(77,"Cadeia de custódia","Qual lei introduziu a cadeia de custódia no CPP?","Lei 13.964/2019 (Pacote Anticrime), introduzindo os arts. 158-A a 158-F. Formalizou em lei os procedimentos de coleta, armazenamento e descarte de vestígios."),
+C(78,"Cadeia de custódia","Quando se inicia formalmente a cadeia de custódia?","Com a preservação do local de crime ou com procedimentos policiais/periciais nos quais seja detectada a existência de vestígio (art. 158-A §1º CPP)."),
+C(79,"Cadeia de custódia","O que é a etapa de Reconhecimento?","Ato de distinguir um elemento como de potencial interesse para a produção da prova pericial. Quem reconhece fica responsável pela preservação inicial."),
+C(80,"Cadeia de custódia","O que é a etapa de Isolamento e o que abrange?","Ato de evitar que se altere o estado das coisas. Deve isolar e preservar o ambiente imediato, mediato e relacionado aos vestígios e ao local de crime."),
+C(81,"Cadeia de custódia","O que é a etapa de Fixação?","Descrição detalhada do vestígio conforme encontrado (posição, estado, dimensão). Pode ser ilustrada por fotografias, filmagens ou croqui. Indispensável no laudo pericial."),
+C(82,"Cadeia de custódia","O que é a etapa de Coleta e quem deve realizá-la?","Ato de recolher o vestígio para análise. Deve ser realizada preferencialmente por perito oficial, respeitando as características do material."),
+C(83,"Cadeia de custódia","O que é a etapa de Acondicionamento?","Embalagem individualizada de cada vestígio conforme suas características físicas, químicas e biológicas, com data, hora e nome de quem realizou a coleta e o acondicionamento."),
+C(84,"Cadeia de custódia","Por que materiais biológicos úmidos não devem ser acondicionados em plástico?","O plástico retém umidade, favorecendo crescimento bacteriano/fúngico que degrada DNA. Materiais biológicos devem secar antes ou ser acondicionados em papel."),
+C(85,"Cadeia de custódia","O que é a etapa de Transporte?","Ato de transferir o vestígio com condições adequadas (embalagens, temperatura, veículo) para manter características originais e controlar a posse. Toda movimentação deve ser registrada."),
+C(86,"Cadeia de custódia","O que deve ser documentado no Recebimento?","Número do procedimento, unidade policial, local de origem, nome do transportador, código de rastreamento, natureza do exame, tipo do vestígio, protocolo e assinatura do receptor."),
+C(87,"Cadeia de custódia","O que é a etapa de Processamento?","O exame pericial em si — manipulação do vestígio com metodologia adequada para obter o resultado. Deve ser formalizado em laudo por perito."),
+C(88,"Cadeia de custódia","O que é a etapa de Armazenamento?","Guarda, em condições adequadas, do material a ser processado, reservado para contraprova ou aguardando descarte, com vinculação ao número do laudo correspondente."),
+C(89,"Cadeia de custódia","Qual a diferença entre Acondicionamento e Armazenamento?","Acondicionamento: embalagem inicial no momento da coleta. Armazenamento: guarda institucional pós-perícia, incluindo reserva para contraprova, com condições controladas."),
+C(90,"Cadeia de custódia","O que é a etapa de Descarte?","Liberação do vestígio após o processo, respeitando a legislação. Entorpecentes em grande quantidade requerem autorização judicial."),
+C(91,"Cadeia de custódia","O que o art. 158-D determina sobre o recipiente?","Deve: individualizar o vestígio, preservar características, impedir contaminação e vazamento, ter resistência adequada e espaço para registros. Lacre numerado e individualizado obrigatório."),
+C(92,"Cadeia de custódia","Quem pode abrir o recipiente lacrado?","Somente o perito que realizará a análise ou, motivadamente, pessoa autorizada. Toda abertura deve ser registrada (art. 158-D §3 e §4 CPP)."),
+C(93,"Cadeia de custódia","O que deve ter a Central de Custódia (art. 158-E)?","Serviço de protocolo com conferência, recepção e devolução; espaço seguro com condições ambientais adequadas; registro de todas as entradas/saídas e identificação dos que acessaram."),
+C(94,"Cadeia de custódia","O que ocorre se a central não tiver espaço de armazenamento?","O diretor do órgão de perícia deve provocar a autoridade policial (inquérito) ou o juiz (processo) para indicar local alternativo (art. 158-F §único CPP)."),
+C(95,"Cadeia de custódia","Quando ocorre Fraude Processual relacionada ao local de crime?","Remoção de vestígios ou entrada em local isolado antes da liberação pelo perito responsável é tipificada como fraude processual (art. 158-C §2º CPP). Exige dolo."),
+C(96,"Cadeia de custódia","Quais os efeitos jurídicos da quebra da cadeia de custódia?","Pode levar à impugnação da prova. Não implica nulidade automática — o juiz avalia se a quebra comprometeu a confiabilidade. Quebras graves aumentam o risco de inadmissibilidade."),
+C(97,"Cadeia de custódia","Como se divide a cadeia em fase externa e interna?","Externa: no local (reconhecimento → recebimento). Interna: no laboratório/instituto (recebimento → processamento → armazenamento → descarte)."),
+C(98,"Cadeia de custódia","O que o art. 170 CPP determina sobre perícias de laboratório?","Os peritos devem guardar material suficiente para eventual contraprova. Os laudos, quando conveniente, devem ser ilustrados com fotografias, microfotografias, desenhos ou esquemas."),
+C(99,"Cadeia de custódia","O que é o lacre e qual sua função?","Selo numerado e individualizado que veda o recipiente do vestígio. Garante inviolabilidade e rastreabilidade. Sua ruptura sem registro compromete a cadeia."),
+C(100,"Cadeia de custódia","Por que sistemas eletrônicos auxiliam a cadeia de custódia?","Código de barras, assinaturas digitais e logs de acesso reduzem erros, permitem rastreamento em tempo real e criam registros auditáveis de cada movimentação do vestígio."),
+C(101,"Local de crime","Definição de Carlos Kehdy?","'Toda área onde tenha ocorrido qualquer fato que reclame as providências da polícia.' Definição sintética e amplamente usada como referência histórica."),
+C(102,"Local de crime","Definição de Eraldo Rabelo?","Porção do espaço abrangendo todos os locais onde atos materiais — preliminares ou posteriores — foram praticados pelo criminoso e diretamente relacionados ao delito."),
+C(103,"Local de crime","Definição de Jesus Antônio Velho?","'O palco principal onde, em geral, inicia-se o trabalho da perícia criminal, representando o berço de geração dos vestígios produzidos no fato em apuração.'"),
+C(104,"Local de crime","Quais são as 5 finalidades do levantamento do local?","1-Constatar a infração; 2-Qualificar a infração; 3-Identificar envolvidos; 4-Perpetuar vestígios (documentar/coletar/preservar); 5-Legalizar o vestígio (cadeia de custódia)."),
+C(105,"Local de crime","O que é o Local Imediato?","A área exata onde ocorreu o fato principal — onde o corpo foi encontrado ou o crime se consumou. É o ponto de partida da perícia."),
+C(106,"Local de crime","O que é o Local Mediato?","As adjacências e pontos de acesso ao local imediato (corredores, jardins, estradas, trilhas). Podem conter vestígios de deslocamento do agente."),
+C(107,"Local de crime","O que é o Local Relacionado?","Área com conexão ao fato, mas sem ligação geográfica direta com o local imediato. Ex.: apartamento de planejamento do crime, rio onde o corpo foi descartado."),
+C(108,"Local de crime","Diferença entre Local Interno e Externo?","Interno: fechado/coberto — preserva vestígios das intempéries (residências, veículos). Externo: área aberta, sujeita às ações climáticas (ruas, praças, matagais)."),
+C(109,"Local de crime","O que determina o art. 6º, I do CPP sobre o local?","Ao tomar conhecimento da infração, a autoridade policial deve providenciar para que não se alterem o estado e a conservação das coisas até a chegada dos peritos."),
+C(110,"Local de crime","Diferença entre Local Idôneo e Inidôneo?","Idôneo (preservado): estado original mantido até os peritos. Inidôneo (violado): sofreu alterações após o crime — por curiosos, socorristas, autor ou condições ambientais."),
+C(111,"Local de crime","O que é Croqui e o que é Desenho Topográfico?","Croqui: esboço sem escala, posições aproximadas. Desenho Topográfico: planta com escala, medições precisas e georreferenciamento — maior valor documental."),
+C(112,"Local de crime","Como funciona o padrão de busca em Espiral?","Varredura das extremidades ao centro (ou inversamente). Recomendado para áreas pequenas com equipes reduzidas."),
+C(113,"Local de crime","Como funciona o padrão de busca em Linha?","Operadores em faixas paralelas varrem a área. Ideal para áreas amplas e abertas — usado em desastres em massa e buscas externas."),
+C(114,"Local de crime","Como funciona o padrão de busca em Grade?","Dois passes perpendiculares (linha cruzada). Maximiza a cobertura — recomendado para áreas com muitos vestígios potenciais."),
+C(115,"Local de crime","Como funciona o padrão de busca em Quadrantes?","O local é dividido em setores conforme obstáculos físicos (cômodos, divisórias). Cada quadrante é vencido separadamente — permite trabalho paralelo."),
+C(116,"Local de crime","Quais são as 3 fases do isolamento do local?","1ª: Primeiro respondente até o 1º policial (socorro/segurança). 2ª: 1º policial até a autoridade (delegado). 3ª: Delegado até a chegada dos peritos criminais."),
+C(117,"Local de crime","Quais são as 7 técnicas de perpetuação dos vestígios?","1-Levantamento descritivo, 2-Fotográfico, 3-Topográfico/GPS, 4-Dactiloscópico, 5-Revelações (luminol/ALS), 6-Decalques/moldagens, 7-Reprodução simulada dos fatos."),
+C(118,"Local de crime","O que deve fazer o primeiro respondente ao chegar?","Garantir segurança → verificar vítima → entrar pelo menor trajeto → só observar (não tocar) → isolar com fita/viaturas → comunicar toda intervenção aos peritos."),
+C(119,"Local de crime","O que é Local Virtual?","Local sem espaço físico — lógico ou digital (servidores, nuvem, dispositivos remotos). A perícia depende de acesso a logs e servidores, frequentemente com ordens judiciais."),
+C(120,"Local de crime","O que deve constar no laudo quando o local foi violado?","Registro das alterações, quem as realizou, os motivos e análise do impacto na reconstrução da dinâmica e na confiabilidade das conclusões periciais."),
+C(121,"Balística","Definição de Balística Forense?","Disciplina que investiga armas de fogo, munições, fenômenos e efeitos dos disparos com o propósito de esclarecer questões judiciais. Subdivide-se em interna, externa e terminal."),
+C(122,"Balística","O que é a Armação (receiver) de uma arma?","Estrutura principal que abriga os componentes internos (cão, ferrolho, percussor, extrator) e conecta cano, coronha e mecanismo de gatilho."),
+C(123,"Balística","Quais são as 3 partes do cano de uma arma?","Câmara: onde o cartucho é inserido. Alma: interior do cano (lisa ou raiada). Boca: extremidade frontal por onde o projétil sai."),
+C(124,"Balística","O que é o Cão (hammer) e qual sua função?","Peça que, liberada pelo gatilho, impacta o percussor ou a espoleta do cartucho, iniciando a ignição. 'Engatilhar' = armar o cão."),
+C(125,"Balística","Quais são os 3 tipos de ação do gatilho?","Ação simples: só libera o cão (armado manualmente). Ação dupla: arma E libera o cão. Dupla ação: opera nos dois modos conforme o estado do cão."),
+C(126,"Balística","O que é o Ferrolho e sua função?","Alimenta a câmara com novo cartucho e bloqueia a culatra durante o disparo. Move-se para frente/trás, ejetando o estojo deflagrado e carregando o próximo."),
+C(127,"Balística","Diferença entre Coronha e Carregador?","Coronha: parte traseira de arma longa, encaixada no ombro para estabilidade. Carregador: armazena e alimenta munições na câmara — pode ser integrado ou removível."),
+C(128,"Balística","Quais são os 4 componentes do cartucho?","Projétil (bala, parte disparada), Estojo (invólucro), Propelente (pólvora, gera gases) e Espoleta (primer, inicia a ignição)."),
+C(129,"Balística","Quais são os formatos do estojo?","Cilíndrico: diâmetro uniforme. Cônico: menor na boca (pouco comum). Garrafa: possui gargalo — permite projétil pequeno com grande carga propelente."),
+C(130,"Balística","Como a Espoleta funciona?","Contém mistura detonante sensível ao impacto. O percussor a comprime contra a bigorna, gerando calor que inicia a ignição. O calor passa pelo 'evento' ao propelente."),
+C(131,"Balística","O que são Elementos Primários e Secundários do tiro?","Primários: causados pelo projétil (perfuração, contusão). Secundários: gases, chama, fuligem e pólvora incombusta que saem pela boca — presentes só em tiros próximos."),
+C(132,"Balística","O que é o Raiamento e suas características?","Sulcos espirais no cano raiado. Passo: torções por polegada. Sentido: dextrogiro (horário) ou sinistrogiro. Objetivo: imprimem rotação ao projétil para estabilizá-lo."),
+C(133,"Balística","Como se classifica a alma do cano?","Raiada: sulcos imprimem rotação, permitindo microcomparação balística (revólveres, pistolas, fuzis). Lisa: para projéteis múltiplos (espingardas) — dificulta comparação individual."),
+C(134,"Balística","Quais movimentos o projétil realiza em voo?","Rotação: giro em torno do eixo (estabilização). Nutação: oscilação do eixo. Precessão: rotação do eixo em torno de eixo secundário. Nutação e precessão crescem com a distância."),
+C(135,"Balística","Quais forças atuam na trajetória na atmosfera?","Gravidade e resistência do ar (sucção na base, compressão na ponta, fricção lateral). Na atmosfera, a trajetória é assimétrica e o alcance máximo é obtido com ângulo menor que 45º."),
+C(136,"Balística","Características do orifício de Entrada do projétil?","Geralmente menor que o projétil (tecidos elásticos se contraem). Pode ter anel de abrasão, chamuscamento, fuligem e tatuagem — dependendo da distância de disparo."),
+C(137,"Balística","Características do orifício de Saída vs Entrada?","Saída: geralmente maior e mais irregular (epiderme menos elástica). Sem anel abrasivo típico. Em tiro encostado, a entrada pode ser maior pela pressão dos gases."),
+C(138,"Balística","Sinais de tiro ENCOSTADO (impostado)?","Impressão do cano na pele, ferida estrelada (no crânio), queimadura, fuligem profunda, enfisema subcutâneo — pressão dos gases causa 'arrombamento' interno."),
+C(139,"Balística","Sinais de tiro a CURTA DISTÂNCIA?","Tatuagem por pólvora (grãos impregnados na pele, irreversível), zona de esfumaçamento (fuligem lavável) e chamuscamento. Ausentes em tiros à distância."),
+C(140,"Balística","Diferença entre Tatuagem por pólvora e Esfumaçamento?","Tatuagem: grãos de pólvora incombusta impregnados — permanente, não sai com lavagem. Esfumaçamento: depósito superficial de fuligem — removível com água."),
+C(141,"Balística","O que é o teste do Rodizonato de Sódio (GSR)?","Teste colorimétrico que detecta bário (alaranjado) e chumbo (rosa). Rápido e barato, mas com limitações: falsos positivos por contaminação e falsos negativos conforme arma/munição."),
+C(142,"Balística","Por que a MEV (SEM-EDS) é o padrão-ouro para GSR?","Identifica morfologia e composição química das partículas. Detecta a combinação Pb-Ba-Sb com alta especificidade. Permite fotografar sem destruir a amostra para reanálises."),
+C(143,"Balística","O que é calibre real e calibre nominal?","Real: diâmetro medido entre os cheios do cano raiado, em mm com precisão. Nominal: designação comercial (ex.: '.38 Special'). Para um mesmo calibre real, há vários nominais."),
+C(144,"Balística","O que é o gáugio (gauge) para espingardas?","Número de esferas de chumbo com diâmetro igual à alma necessárias para pesar 1 libra. Espingarda cal. 12 = 12 esferas (18,42 mm). Menor número = maior cano."),
+C(145,"Balística","Como é realizada a Microcomparação Balística?","Projétil questionado (do crime) vs projétil padrão (disparado em laboratório pela arma suspeita), comparados sob microscópio comparador. Busca concordância de estrias e marcas."),
+C(146,"Balística","Quais marcas a arma deixa no estojo?","Marca do percussor na espoleta, marca da face do ferrolho, marcas do extrator/ejetor e de alimentação da câmara. Permitem vincular estojo a arma específica."),
+C(147,"Balística","Como a posição do tiro afeta o orifício de entrada?","Perpendicular: circular. Com inclinação: oval — quanto maior a obliquidade, mais oval. Em inclinação extrema: escoriação alongada sem orifício ('tiro de raspão')."),
+C(148,"Balística","O que é a análise de trajetória de projéteis?","Exame que determina direção, ângulo e sequência dos disparos. Usa alinhamento de orifícios, bastões/hastes, modelos 3D e marcas em objetos intermediários."),
+C(149,"Balística","O que é o exame metalográfico em balística?","Usa polimento, lixamento e ataque químico para revelar estrutura do metal, números de série raspados e marcas de fabricação — identifica individualmente a arma."),
+C(150,"Balística","Por que ausência de GSR não exclui que a pessoa disparou?","GSR se perde por atrito, lavagem, luvas. Munições modernas (lead-free) não produzem Pb-Ba-Sb. A ausência é inconclusiva — não exclui o envolvimento."),
+C(151,"Dactiloscopia","Quando as impressões papilares se formam e quando cessam?","Formam-se por volta do 6º mês de gestação e permanecem toda a vida. Persistem por algum tempo após a morte, até serem eliminadas pela decomposição."),
+C(152,"Dactiloscopia","Por que as impressões papilares são únicas?","Padrão determinado geneticamente e por fatores intrauterinos — diferentes até em gêmeos univitelinos. A secreção sebácea transfere o padrão para os objetos tocados."),
+C(153,"Dactiloscopia","Descrição do Arco (A/1) de Vucetich?","Linhas que vão de um lado ao outro do dedo sem curvas pronunciadas. Sem delta. O mais simples dos 4 tipos. A para polegar, 1 para demais dedos."),
+C(154,"Dactiloscopia","Descrição da Presilha Interna (I/2)?","Linhas partem da esquerda, vão ao centro, curvam e retornam ao mesmo lado. Delta à direita do observador. I para polegar, 2 para demais dedos."),
+C(155,"Dactiloscopia","Descrição da Presilha Externa (E/3)?","Linhas partem da direita, vão ao centro, curvam e retornam ao mesmo lado. Delta à esquerda do observador. E para polegar, 3 para demais dedos."),
+C(156,"Dactiloscopia","Descrição do Verticilo (V/4)?","Linhas em círculos concêntricos (ou espirais) com dois deltas — um à direita e um à esquerda. V para polegar, 4 para demais. Inclassificável: X."),
+C(157,"Dactiloscopia","O que é o Delta e quais sistemas delimita?","Ponto de encontro dos sistemas basilar, nuclear e marginal. Basilar: abaixo. Marginal: acima. Nuclear: entre os ramos do delta."),
+C(158,"Dactiloscopia","O que é a Fórmula Dactiloscópica?","Sequência de letras e números representando os tipos de cada dedo. Numerador (série) = mão direita (polegar→mínimo). Denominador (seção) = mão esquerda."),
+C(159,"Dactiloscopia","O que é o AFIS e quais erros pode produzir?","Automated Fingerprint Identification System. Falso negativo: impressão no banco não é encontrada. Falso positivo: impressão de pessoa diferente é retornada erroneamente."),
+C(160,"Dactiloscopia","Quais são os pontos característicos (minúcias)?","Bifurcação (divisão em ângulo obtuso), Forquilha (ângulo agudo), Encerro (cristas cruzadas formando espaço fechado), Ilhota (fragmento curto), Cortada (extensão maior isolada)."),
+C(161,"Dactiloscopia","Como revelar impressões em superfícies não-porosas?","Pós impregnadores (carbono, alumínio) aderem à gordura. Fumigação com cianoacrilato (supercola) polimeriza sobre a impressão formando imagem branca."),
+C(162,"Dactiloscopia","Como revelar impressões em superfícies porosas (papel)?","Ninhidrina: reage com aminoácidos, produz coloração púrpura. Nitrato de prata: detecta cloretos. Physical developer: para impressões antigas quando ninhidrina falha."),
+C(163,"Dactiloscopia","O que é a Necropapiloscopia?","Identificação do cadáver por impressões digitais post mortem. Realizada quando as cristas ainda estão preservadas. Pode exigir técnicas de reinidratação em casos de decomposição."),
+C(164,"Dactiloscopia","O que é o Albodactilograma?","Conjunto de linhas brancas (cicatrizes, cristas rasas congênitas) no padrão papilar. Têm valor identificatório complementar e não impedem a classificação decadactilar."),
+C(165,"Dactiloscopia","Quantas fórmulas dactiloscópicas diferentes são possíveis?","1.048.576 (1.024 séries × 1.024 seções). A leitura da impressão é feita no sentido horário a partir da posição 12 horas."),
+C(166,"Dactiloscopia","O que são os 3 sistemas de linhas papilares?","Marginal: acima do delta (periferia). Basilar: abaixo (base). Nuclear: entre os ramos do delta (centro). O delta é formado pelo ponto de encontro dos três sistemas."),
+C(167,"Dactiloscopia","Diferença entre Decadactilar e Monodactilar no AFIS?","Decadactilar: registro completo dos 10 dedos (cadastro). Monodactilar: análise de fragmento individual coletado na cena — pesquisa em banco."),
+C(168,"Dactiloscopia","O que é o Vacuum Metal Deposition (VMD)?","Técnica avançada que deposita metais (ouro, zinco) em câmara de vácuo sobre a impressão. Alta sensibilidade para superfícies plásticas e lisas desafiadoras."),
+C(169,"Dactiloscopia","Por que impressão digital do cadáver pode ser difícil?","A decomposição altera/destrói as cristas papilares. Em casos avançados, técnicas de reinidratação e moldes são necessárias. Odontologia forense e DNA são alternativas."),
+C(170,"Dactiloscopia","Qual critério identifica definitivamente uma pessoa por impressão digital?","Coincidência de pontos característicos em número, tipo e posição relativa entre amostra questionada e padrão, sem discrepâncias. Não há número fixo legal no Brasil."),
+C(171,"DNA e identificação","Quando Jeffreys fez a 1ª aplicação forense do DNA?","Em 1985, com a técnica RFLP (Restriction Fragment Length Polymorphism). Criou o conceito de 'impressão digital de DNA'."),
+C(172,"DNA e identificação","Por que VNTRs foram substituídos por STRs?","VNTRs exigem DNA íntegro e em quantidade elevada (500–1000 ng). STRs amplificados por PCR funcionam com amostras mínimas e degradadas — mais comuns em cenas de crime."),
+C(173,"DNA e identificação","O que são STRs/Microssatélites?","Sequências de 2–7 pares de bases repetidos em tandem. Altamente polimórficos por variações no número de repetições, gerando perfis únicos amplificáveis por PCR."),
+C(174,"DNA e identificação","O que é PCR e por que é fundamental na genética forense?","Reação em Cadeia da Polimerase: amplifica regiões específicas do DNA in vitro. Permite analisar quantidades mínimas de material, viabilizando perícia em amostras degradadas."),
+C(175,"DNA e identificação","O que é o PCR Multiplex?","Amplifica vários loci STR simultaneamente em uma única reação com múltiplos primers. Otimiza tempo, reduz custos e permite análise completa com amostra mínima."),
+C(176,"DNA e identificação","O que é a Eletroforese Capilar e como gera o perfil genético?","Separa fragmentos de DNA por tamanho em capilar com campo elétrico. Detectores de fluorescência registram cada alelo, gerando eletroferograma com o perfil do indivíduo."),
+C(177,"DNA e identificação","O que é o CODIS (FBI) e quantos loci utiliza?","Combined DNA Index System: banco de dados de perfis de DNA. Inicialmente 13 loci STR; expandido para 20 loci para aumentar o poder discriminativo."),
+C(178,"DNA e identificação","O que é o BNPG e quem tem perfil obrigatoriamente inserido?","Banco Nacional de Perfis Genéticos (Decreto 7.950/2013). Condenados por crimes dolosos ou hediondos são obrigados a fornecer material (Lei 12.654/2012)."),
+C(179,"DNA e identificação","Quando é usado o DNA Mitocondrial (mtDNA)?","Em material muito degradado ou sem células nucleadas (cabelos sem raiz, ossos velhos, dentes). Herdado pela mãe — permite identificar linhagem materna."),
+C(180,"DNA e identificação","O que são Y-STRs e quando são úteis?","Microssatélites do cromossomo Y, herdados pelo lado paterno. Úteis em amostras mistas (ex.: crime sexual) para isolar o perfil masculino quando o material feminino predomina."),
+C(181,"DNA e identificação","Quais materiais podem fornecer DNA para perícia?","Sangue, sêmen, saliva, urina, pelos com raiz, tecido, ossos, dentes, material subungueal, suor e — por 'touch DNA' — células epiteliais de superfícies tocadas."),
+C(182,"DNA e identificação","Qual o fluxo padrão da análise de DNA forense?","Coleta → extração → quantificação → normalização → amplificação PCR → eletroforese capilar → interpretação → comparação com banco (BNPG) ou referências do caso."),
+C(183,"DNA e identificação","Por que a identificação por arcada dentária é confiável?","Nenhuma arcada é igual a outra. Os dentes resistem a altas temperaturas, putrefação e decomposição — ideais para vítimas carbonizadas e desastres de massa."),
+C(184,"DNA e identificação","Como funciona a identificação por arcada dentária?","Comparação entre registros ante-mortem (fichas/radiografias do dentista) e dados post-mortem do cadáver. Analisa posição, ausências, cáries, restaurações e anomalias."),
+C(185,"DNA e identificação","Nomenclatura STR — exemplo D18S51?","D=DNA, 18=cromossomo 18, S=STR, 51=identificação exclusiva do locus. Nomenclatura padronizada pela Sociedade Internacional de Genética Forense (ISFG)."),
+C(186,"DNA e identificação","Por que o DNA é mais confiável que o testemunho ocular?","Baseado em estatística de genética populacional — 'padrão-ouro' dos testes forenses. O testemunho sofre interferência de memória e sugestão; o DNA é objetivo e reprodutível."),
+C(187,"DNA e identificação","O que é marcador polimórfico e por que deve estar em >1% da população?","Sequência com variações entre indivíduos. Precisa estar em mais de 1% da população para ter poder discriminativo — variações rarísimas não diferenciam populações adequadamente."),
+C(188,"DNA e identificação","Como a miscigenação brasileira afeta o BNPG?","Exige determinação de frequências dos marcadores em todos os estados, pois cada região tem influências étnicas distintas que afetam as frequências alélicas locais."),
+C(189,"DNA e identificação","Vantagens do DNA sobre outros métodos de identificação?","Obtido de múltiplas fontes biológicas, alta capacidade discriminativa, sensibilidade analítica, resistência a condições ambientais, diferenciação entre células sexuais e autossômicas."),
+C(190,"DNA e identificação","Limitações do exame de DNA na prática forense?","Risco de contaminação, degradação por calor/umidade, falha humana na interpretação, amostras mistas complexas e custo/tempo de análise. Exige cadeia de custódia rigorosa."),
+C(191,"Fotografia forense","Qual o objetivo da Fotografia Forense?","Documentar evidências de forma precisa e imparcial. Garante registro visual objetivo que pode ser analisado por especialistas, advogados, juízes e júris."),
+C(192,"Fotografia forense","Qual tipo de câmera é mais indicado para local de crime?","DSLR: controles avançados manuais, troca de lentes, alta qualidade de imagem e foco preciso. Permite ajuste de todos os parâmetros para cada situação."),
+C(193,"Fotografia forense","O que é ISO e como afeta a fotografia forense?","Sensibilidade do sensor à luz. ISO alto: mais sensível, útil em baixa luminosidade, mas gera ruído. ISO baixo: imagem mais limpa, ideal em ambientes iluminados."),
+C(194,"Fotografia forense","O que é o Diafragma e como afeta a profundidade de campo?","Abertura que controla a quantidade de luz. f menor (abertura grande): menos profundidade. f maior (abertura pequena): mais profundidade — útil para cenas completas."),
+C(195,"Fotografia forense","O que é o Obturador e como afeta imagens?","Controla o tempo de exposição. Velocidade alta: 'congela' movimento. Velocidade baixa: registra mais luz (essencial para fotografar luminol em ambiente escuro, com tripé)."),
+C(196,"Fotografia forense","O que é a Lei da Reciprocidade?","Equilíbrio entre ISO, abertura e velocidade do obturador para exposição correta. Alterar um exige compensar nos outros. Crítica para fotografar luminol (baixa luminosidade)."),
+C(197,"Fotografia forense","O que é o LiDAR e como é usado na perícia?","Sensor remoto ativo que emite pulsos laser, mede o tempo de retorno e calcula distâncias com alta precisão. Cria nuvens de pontos 3D do local — útil para reconstrução espacial."),
+C(198,"Fotografia forense","O que é a luz UV-A e para que serve na perícia?","Comprimento de onda 315–400 nm. Revela fluidos biológicos (sangue, sêmen, saliva), impressões digitais e elementos de segurança em documentos."),
+C(199,"Fotografia forense","Como fotografar vestígios revelados por Luminol?","1-Escurecer o ambiente. 2-Aplicar luminol. 3-Câmara com longa exposição (Lei da Reciprocidade). 4-Tripé obrigatório. A quimioluminescência dura pouco — cada clique exige nova aplicação."),
+C(200,"Fotografia forense","JPEG vs RAW para documentação forense?","JPEG: comprimido, menor tamanho, qualidade se degrada com edições. RAW: todos os dados do sensor, sem compressão — maior fidelidade, ideal para pós-processamento na perícia."),
+];
+
+const CATS=["Todos",...Object.keys(RAMPS)];
+const STORAGE_KEY="crim_flashcards_v1";
+
+const loadProgress=()=>{
+  try{
+    const s=localStorage.getItem(STORAGE_KEY);
+    if(s){const {k,r}=JSON.parse(s);return{known:new Set(k),review:new Set(r)};}
+  }catch(e){}
+  return{known:new Set(),review:new Set()};
+};
+const saveProgress=(k,r)=>{
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({k:[...k],r:[...r]}));}catch(e){}
+};
+
+function App(){
+  const [cat,setCat]=useState("Todos");
+  const [idx,setIdx]=useState(0);
+  const [flipped,setFlipped]=useState(false);
+  const [known,setKnown]=useState(()=>loadProgress().known);
+  const [review,setReview]=useState(()=>loadProgress().review);
+  const [showDone,setShowDone]=useState(false);
+  const [revMode,setRevMode]=useState(false);
+
+  useEffect(()=>{saveProgress(known,review);},[known,review]);
+
+  const cards=revMode
+    ?CARDS.filter(c=>review.has(c.id))
+    :cat==="Todos"?CARDS:CARDS.filter(c=>c.cat===cat);
+  const card=cards[idx]||null;
+  const ramp=card?RAMPS[card.cat]:Object.values(RAMPS)[0];
+
+  const go=useCallback((dir)=>{
+    setFlipped(false);
+    setTimeout(()=>{
+      setIdx(i=>{
+        const next=(i+dir+cards.length)%cards.length;
+        if(dir>0&&next===0&&cards.length>1)setShowDone(true);
+        return next;
+      });
+    },100);
+  },[cards.length]);
+
+  useEffect(()=>{
+    const h=(e)=>{
+      if(e.target.tagName==="BUTTON"||e.target.tagName==="INPUT")return;
+      if(e.key==="ArrowLeft")go(-1);
+      else if(e.key==="ArrowRight")go(1);
+      else if(e.key===" "||e.key==="Enter"){e.preventDefault();setFlipped(f=>!f);}
+      else if(e.key==="1"&&flipped&&card)mark("known");
+      else if(e.key==="2"&&flipped&&card)mark("review");
+    };
+    window.addEventListener("keydown",h);
+    return()=>window.removeEventListener("keydown",h);
+  },[flipped,card,go]);
+
+  const mark=useCallback((type)=>{
+    if(!card)return;
+    const id=card.id;
+    if(type==="known"){
+      setKnown(p=>new Set([...p,id]));
+      setReview(p=>{const s=new Set(p);s.delete(id);return s;});
+    }else{
+      setReview(p=>new Set([...p,id]));
+      setKnown(p=>{const s=new Set(p);s.delete(id);return s;});
+    }
+    go(1);
+  },[card,go]);
+
+  const changeCat=(c)=>{setCat(c);setIdx(0);setFlipped(false);setShowDone(false);setRevMode(false);};
+  const resetAll=()=>{setKnown(new Set());setReview(new Set());setIdx(0);setFlipped(false);setShowDone(false);setRevMode(false);};
+  const knownN=cards.filter(c=>known.has(c.id)).length;
+  const reviewN=cards.filter(c=>review.has(c.id)).length;
+  const pct=cards.length>0?Math.round(((idx+1)/cards.length)*100):0;
+  const totalRev=CARDS.filter(c=>review.has(c.id)).length;
+  const cCount=(c)=>c==="Todos"?CARDS.length:CARDS.filter(x=>x.cat===c).length;
+
+  if(revMode&&cards.length===0)return(
+    <div className="app">
+      <div className="empty">
+        <p>Nenhum cartão para revisar!</p>
+        <button className="btn-sm btn-sm-green" onClick={()=>setRevMode(false)}>Voltar ao deck</button>
+      </div>
+    </div>
+  );
+
+  return(
+    <div className="app">
+      <h1>Flashcards — Criminalística</h1>
+      <p className="subtitle">{cards.length} cartões · toque no cartão para revelar</p>
+
+      <div className="pills">
+        {CATS.map(c=>{
+          const active=!revMode&&cat===c;
+          const r=c==="Todos"?null:RAMPS[c];
+          return(
+            <button key={c} className={`pill${active?" active":""}`}
+              style={active&&r?{background:r.bg,borderColor:r.bo,color:r.ba}:active?{background:"#eee",borderColor:"#bbb",color:"#333"}:{}}
+              onClick={()=>changeCat(c)}>
+              {c==="Todos"?`Todos (${cCount(c)}):`:`${c} (${cCount(c)})`}
+            </button>
+          );
+        })}
+        {totalRev>0&&(
+          <button className={`pill${revMode?" active":""}`}
+            style={revMode?{background:"#fff5f5",borderColor:"#ffc5c5",color:"#d43b3b"}:{}}
+            onClick={()=>{setRevMode(true);setIdx(0);setFlipped(false);setShowDone(false);}}>
+            Para revisar ({totalRev})
+          </button>
+        )}
+      </div>
+
+      <div className="prog-row"><span>{idx+1} / {cards.length}</span><span>{pct}% concluído</span></div>
+      <div className="prog-track"><div className="prog-fill" style={{width:`${pct}%`,background:ramp.bo}}/></div>
+
+      {card&&(
+        <div className={`card${flipped?" flipped":""}`}
+          style={{borderLeftColor:ramp.bo}}
+          onClick={()=>setFlipped(f=>!f)}>
+          <div className="card-header">
+            <span className="badge" style={{background:ramp.bg,color:ramp.ba}}>{card.cat}</span>
+            <span className="side-label">{flipped?"resposta":"pergunta"}</span>
+          </div>
+          <p className="card-text">{flipped?card.a:card.q}</p>
+          <p className="card-hint">{flipped?"toque para ver a pergunta":"toque para revelar"}</p>
+        </div>
+      )}
+
+      {flipped&&(
+        <div className="action-row">
+          <button className="btn btn-review" onClick={()=>mark("review")}>Revisar <small>[2]</small></button>
+          <button className="btn btn-know" onClick={()=>mark("known")}>Sei! <small>[1]</small></button>
+        </div>
+      )}
+
+      <div className="nav-row">
+        <button className="btn-nav" onClick={()=>go(-1)}>← Anterior</button>
+        <button className="btn-nav" style={{borderColor:ramp.bo+"66",color:ramp.ba}} onClick={()=>go(1)}>Próximo →</button>
+      </div>
+
+      <div className="stats">
+        <div className="stat s-know"><div className="n">{knownN}</div><div className="l">Sei</div></div>
+        <div className="stat s-rev"><div className="n">{reviewN}</div><div className="l">Revisar</div></div>
+        <div className="stat s-pend"><div className="n">{cards.length-knownN-reviewN}</div><div className="l">Pendentes</div></div>
+      </div>
+
+      <p className="kb"><kbd>←</kbd><kbd>→</kbd> navegar · <kbd>Espaço</kbd> virar · <kbd>1</kbd> sei · <kbd>2</kbd> revisar</p>
+
+      {showDone&&(
+        <div className="done">
+          <div><div className="done-t">Deck concluído!</div><div className="done-s">{knownN} sabidos · {reviewN} para revisar</div></div>
+          <button className="btn-sm btn-sm-green" onClick={()=>{setIdx(0);setFlipped(false);setShowDone(false);}}>Reiniciar</button>
+        </div>
+      )}
+
+      <button className="btn-sm btn-sm-gray" onClick={resetAll}>Limpar todo o progresso</button>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
